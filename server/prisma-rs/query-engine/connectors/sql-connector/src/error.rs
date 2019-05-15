@@ -1,6 +1,7 @@
 use connector::error::*;
 use failure::{Error, Fail};
 use prisma_models::prelude::DomainError;
+use std::string::FromUtf8Error;
 
 #[cfg(feature = "sqlite")]
 use rusqlite;
@@ -175,6 +176,18 @@ impl From<uuid::parser::ParseError> for SqlError {
     }
 }
 
+impl From<uuid::BytesError> for SqlError {
+    fn from(e: uuid::BytesError) -> SqlError {
+        SqlError::ColumnReadFailure(e.into())
+    }
+}
+
+impl From<FromUtf8Error> for SqlError {
+    fn from(e: FromUtf8Error) -> SqlError {
+        SqlError::ColumnReadFailure(e.into())
+    }
+}
+
 #[cfg(feature = "postgresql")]
 impl From<tokio_postgres::error::Error> for SqlError {
     fn from(e: tokio_postgres::error::Error) -> SqlError {
@@ -206,5 +219,19 @@ impl From<tokio_postgres::error::Error> for SqlError {
 impl From<native_tls::Error> for SqlError {
     fn from(e: native_tls::Error) -> SqlError {
         SqlError::ConnectionError(e.into())
+    }
+}
+
+#[cfg(feature = "mysql")]
+impl From<mysql_client::error::Error> for SqlError {
+    fn from(e: mysql_client::error::Error) -> SqlError {
+        SqlError::ConnectionError(e.into())
+    }
+}
+
+#[cfg(feature = "mysql")]
+impl From<mysql_client::FromValueError> for SqlError {
+    fn from(e: mysql_client::FromValueError) -> SqlError {
+        SqlError::ColumnReadFailure(e.into())
     }
 }
